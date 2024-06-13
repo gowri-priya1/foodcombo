@@ -1,0 +1,119 @@
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+import unidecode
+import os
+import plotly.express as px
+
+# Change working directory to where the CSV files are located
+os.chdir('E:/project/EDP Restaurant/datasets')
+
+# Read the CSV files
+orders_first_restaurant = pd.read_csv('restaurant-1-orders.csv')
+orders_second_restaurant = pd.read_csv('restaurant-2-orders.csv')
+
+# Add a 'restaurant' column to identify which restaurant the orders belong to
+orders_first_restaurant['restaurant'] = '1 - restaurant'
+orders_second_restaurant['restaurant'] = '2 - restaurant'
+
+# Rename column 'Order ID' to 'Order Number' in the second restaurant's dataset
+orders_second_restaurant.rename(columns={'Order ID':'Order Number'}, inplace=True)
+
+# Concatenate the two datasets
+orders = pd.concat([orders_first_restaurant, orders_second_restaurant])
+
+# Drop the 'Total products' column
+orders.drop('Total products', axis=1, inplace=True)
+
+# Function to format column names
+def format_columns(column):
+    new_column = ' '.join(column.split())
+    new_column = new_column.replace(' ', '_')
+    return new_column.lower()
+
+# Apply the format_columns function to column names
+orders.columns = [format_columns(c) for c in orders.columns]
+
+# Drop rows with missing values
+cleaned_orders = orders.dropna()
+
+# Export the cleaned dataset to a CSV file
+cleaned_orders.to_csv('cleaned_orders.csv', index=False)
+
+# Function to calculate summary statistics
+def stats_summary(data):
+    sales = data['product_price'].sum()
+    quantity = data['quantity'].sum()
+    orders_count = len(data['order_number'].unique())
+    avg_price_order = sales / orders_count
+    avg_price_food = sales / quantity
+    count_food_orders = quantity / orders_count
+    return {'avg_price_order': avg_price_order,
+            'avg_price_food': avg_price_food,
+            'count_food_orders': count_food_orders}
+
+# Function to print summary statistics
+def print_summary(data):
+    stats = stats_summary(data)
+    for key, value in stats.items():
+        print(f'{key}: {value:.3}')
+
+# Print summary statistics for each restaurant and total
+print('\n1 - restaurant\n')
+print_summary(orders[orders['restaurant']=='1 - restaurant'])
+print('\n2 - restaurant\n')
+print_summary(orders[orders['restaurant']=='2 - restaurant'])
+print('\nTotal\n')
+print_summary(orders)
+
+# Group by item name and calculate frequency
+items_frequency = orders.groupby('item_name').size().reset_index(name='quantity')
+
+# Describe the frequency distribution
+print(items_frequency.describe())
+print(f'\nTotal unique orders: {len(orders["order_number"].unique())}')
+
+# Function for text normalization
+def text_normalization(text):
+    new_text = ' '.join(text.split())
+    return unidecode.unidecode(new_text.lower())
+
+# Apply text normalization to 'item_name' column
+orders['item_name'] = orders['item_name'].apply(text_normalization)
+
+# Convert the dataframe to a list of items in each order
+item_list = orders.groupby('order_number')['item_name'].unique()
+
+# Transform the values to 1 if the item belongs to that order, otherwise 0
+te = TransactionEncoder()
+oht_orders = te.fit(item_list).transform(item_list, sparse=True)
+sparse_df_items = pd.DataFrame.sparse.from_spmatrix(oht_orders, columns=te.columns_)
+
+# Apply Apriori algorithm to find frequent itemsets
+frequent_itemsets = apriori(sparse_df_items, min_support=0.02209, max_len=11, use_colnames=True, verbose=1)
+
+# Prepare data for plotting frequent itemsets
+frequent_itemsets_plot = frequent_itemsets.copy()
+frequent_itemsets_plot['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
+frequent_itemsets_plot['support'] = (frequent_itemsets_plot['support'] * 100).round(2)
+frequent_itemsets_plot["itemsets"] = frequent_itemsets_plot["itemsets"].apply(lambda x: ', '.join(list(x))).astype("str")
+
+# Display summary statistics by length of itemsets
+print(frequent_itemsets_plot.groupby('length')['support'].describe())
+
+# Plot the top 20 frequent itemsets
+top_20_frequency = frequent_itemsets_plot.sort_values('support', ascending=False).head(20).sort_values('support')
+fig = px.bar(top_20_frequency, x="support", y="itemsets", orientation='h', text='support')
+fig.update_traces(textposition="outside")
+fig.show()
+
+# Generate association rules
+market_basket_rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+
+# Display top antecedents for each rule
+print(market_basket_rules.groupby('antecedents').size().sort_values(ascending=False))
+
+# Display best item recommendations
+top_20_frequency_items = frequent_itemsets.sort_values('support', ascending=False).head(20)['itemsets']
+best_item_recommendations = market_basket_rules.sort_values(['confidence', 'lift'], ascending=False).drop_duplicates(subset=['antecedents'])
+print(best_item_recommendations[best_item_recommendations['antecedents'].isin(top_20_frequency_items)])
