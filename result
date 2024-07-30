@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Result Page</h1>
+        <h2>Summary Statistics</h2>
+        <h3>1 - Restaurant</h3>
+        <p>{'avg_price_order': 29.523382100470254, 'avg_price_food': 4.251080168957771, 'count_food_orders': 6.944913040232888}</p>
+        <h3>2 - Restaurant</h3>
+        <p>{'avg_price_order': 30.96995625190763, 'avg_price_food': 4.090238101636614, 'count_food_orders': 7.571675653677892}</p>
+        <h3>Total</h3>
+        <p>{'avg_price_order': 43.58891324161279, 'avg_price_food': 4.1521059594435386, 'count_food_orders': 10.498025259320341}</p>
+        <h2>Top 20 Frequent Itemsets</h2>
+        <img src="E:/project/EDP Restaurant/templates\top_20_frequent_itemsets.png" alt="Top 20 Frequent Itemsets">
+        <h2>Association Rules</h2>
+        <p>          antecedents                                        consequents  ...  conviction  zhangs_metric
+0        (pilau rice)                                        (aloo gobi)  ...    1.008321       0.227041
+1         (aloo gobi)                                       (pilau rice)  ...    1.147368       0.120450
+2     (plain papadum)                                        (aloo gobi)  ...    1.006790       0.156779
+3         (aloo gobi)                                    (plain papadum)  ...    1.073965       0.100518
+4        (pilau rice)                                            (bhuna)  ...    1.011211       0.368618
+...               ...                                                ...  ...         ...            ...
+2205  (plain papadum)  (mint sauce, pilau rice, mango chutney, onion ...  ...    1.035528       0.971059
+2206     (mint sauce)  (plain papadum, pilau rice, mango chutney, oni...  ...    1.107851       0.814306
+2207  (mango chutney)  (plain papadum, pilau rice, onion chutney, min...  ...    1.074677       0.870191
+2208  (onion chutney)  (plain papadum, pilau rice, mango chutney, min...  ...    1.171312       0.835551
+2209     (pilau rice)  (plain papadum, mango chutney, onion chutney, ...  ...    1.013658       0.576151
+
+[2210 rows x 10 columns]</p>
+    </div>
+</body>
+</html>
